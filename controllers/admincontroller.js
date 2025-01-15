@@ -114,23 +114,65 @@ export const CountAll = asyncHandler(async (request, response) => {
   try {
     const result = await pool.request().query(
       `SELECT 
-        -- v1 status counts
-        SUM(CASE WHEN v1_status = 'OK' AND CAST(v1_start_date AS DATE) = CAST(GETDATE() AS DATE) THEN 1 ELSE 0 END) AS v1_ok_count,
-        SUM(CASE WHEN v1_status = 'NOT OK' AND CAST(v1_start_date AS DATE) = CAST(GETDATE() AS DATE) THEN 1 ELSE 0 END) AS v1_notok_count,
+          -- v1 status counts
+          SUM(CASE 
+              WHEN v1_status = 'OK' 
+              AND CAST(v1_start_date AS DATE) = CAST(GETDATE() AS DATE) 
+              THEN 1 ELSE 0 
+          END) AS v1_ok_count,
+          SUM(CASE 
+              WHEN v1_status = 'NOT OK' 
+              AND CAST(v1_start_date AS DATE) = CAST(GETDATE() AS DATE) 
+              THEN 1 ELSE 0 
+          END) AS v1_notok_count,
 
-        -- v2 status counts
-        SUM(CASE WHEN v2_status = 'OK' AND CAST(v2_start_date AS DATE) = CAST(GETDATE() AS DATE) THEN 1 ELSE 0 END) AS v2_ok_count,
-        SUM(CASE WHEN v2_status = 'NOT OK' AND CAST(v2_start_date AS DATE) = CAST(GETDATE() AS DATE) THEN 1 ELSE 0 END) AS v2_notok_count,
+          -- v2 status counts
+          SUM(CASE 
+              WHEN v2_status = 'OK' 
+              AND CAST(v2_start_date AS DATE) = CAST(GETDATE() AS DATE) 
+              THEN 1 ELSE 0 
+          END) AS v2_ok_count,
+          SUM(CASE 
+              WHEN v2_status = 'NOT OK' 
+              AND CAST(v2_start_date AS DATE) = CAST(GETDATE() AS DATE) 
+              THEN 1 ELSE 0 
+          END) AS v2_notok_count,
 
-        -- welding status counts
-        SUM(CASE WHEN welding_status = 'OK' AND CAST(welding_start_date AS DATE) = CAST(GETDATE() AS DATE) THEN 1 ELSE 0 END) AS welding_ok_count,
-        SUM(CASE WHEN welding_status = 'NOT OK' AND CAST(welding_start_date AS DATE) = CAST(GETDATE() AS DATE) THEN 1 ELSE 0 END) AS welding_notok_count,
+          -- welding status counts
+          SUM(CASE 
+              WHEN welding_status = 'OK' 
+              AND CAST(welding_start_date AS DATE) = CAST(GETDATE() AS DATE) 
+              THEN 1 ELSE 0 
+          END) AS welding_ok_count,
+          SUM(CASE 
+              WHEN welding_status = 'NOT OK' 
+              AND CAST(welding_start_date AS DATE) = CAST(GETDATE() AS DATE) 
+              THEN 1 ELSE 0 
+          END) AS welding_notok_count,
 
-        -- fpcb status counts
-        SUM(CASE WHEN fpcb_status = 'OK' AND CAST(fpcb_start_date AS DATE) = CAST(GETDATE() AS DATE) THEN 1 ELSE 0 END) AS fpcb_ok_count,
-        SUM(CASE WHEN fpcb_status = 'NOT OK' AND CAST(fpcb_start_date AS DATE) = CAST(GETDATE() AS DATE) THEN 1 ELSE 0 END) AS fpcb_notok_count
+          -- fpcb status counts
+          SUM(CASE 
+              WHEN fpcb_status = 'OK' 
+              AND CAST(fpcb_start_date AS DATE) = CAST(GETDATE() AS DATE) 
+              THEN 1 ELSE 0 
+          END) AS fpcb_ok_count,
+          SUM(CASE 
+              WHEN fpcb_status = 'NOT OK' 
+              AND CAST(fpcb_start_date AS DATE) = CAST(GETDATE() AS DATE) 
+              THEN 1 ELSE 0 
+          END) AS fpcb_notok_count
 
-      FROM [dbo].[clw_station_status]`
+      FROM [dbo].[clw_station_status]
+      WHERE 
+          -- Filter invalid data upfront
+          TRY_CAST(v1_start_date AS DATE) IS NOT NULL
+          AND TRY_CAST(v2_start_date AS DATE) IS NOT NULL
+          AND TRY_CAST(welding_start_date AS DATE) IS NOT NULL
+          AND TRY_CAST(fpcb_start_date AS DATE) IS NOT NULL
+          AND v1_status IN ('OK', 'NOT OK')
+          AND v2_status IN ('OK', 'NOT OK')
+          AND welding_status IN ('OK', 'NOT OK')
+          AND fpcb_status IN ('OK', 'NOT OK');`
     );
 
     response.status(200).json({
@@ -138,11 +180,12 @@ export const CountAll = asyncHandler(async (request, response) => {
       data: result.recordset[0], // Aggregate counts for the day
     });
   } catch (error) {
-    console.error("Error while updating live status:", error);
-    response.status(500).json({ status: "error", msg: "Error while updating live status" });
+    console.error("Error while counting records:", error);
+    response
+      .status(500)
+      .json({ status: "error", msg: "Error while counting records" });
   }
 });
-
 
 // Function to call CountAll at an interval
 const callCountAll = () => {
