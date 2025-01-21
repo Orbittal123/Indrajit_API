@@ -83,6 +83,7 @@ export const CountAll = asyncHandler(async (request, response) => {
         module_barcode AS v1_live_status 
       FROM [replus_treceability].[dbo].[linking_module_RFID] 
       WHERE v1_live_status = '1' 
+      AND CAST(date_time AS DATE) = CAST(GETDATE() AS DATE)
       ORDER BY date_time DESC
     `);
     const result3 = await pool.request().query(`
@@ -90,6 +91,7 @@ export const CountAll = asyncHandler(async (request, response) => {
         module_barcode AS v2_live_status 
       FROM [replus_treceability].[dbo].[linking_module_RFID] 
       WHERE v2_live_status = '1' 
+      AND CAST(date_time AS DATE) = CAST(GETDATE() AS DATE)
       ORDER BY date_time DESC
     `);
     
@@ -98,6 +100,7 @@ export const CountAll = asyncHandler(async (request, response) => {
         module_barcode AS welding_live_status 
       FROM [replus_treceability].[dbo].[linking_module_RFID] 
       WHERE welding_live_status = '1' 
+      AND CAST(date_time AS DATE) = CAST(GETDATE() AS DATE)
       ORDER BY date_time DESC
     `);
     
@@ -106,8 +109,9 @@ export const CountAll = asyncHandler(async (request, response) => {
         module_barcode AS fpcb_live_status 
       FROM [replus_treceability].[dbo].[linking_module_RFID] 
       WHERE fpcb_live_status = '1' 
+      AND CAST(date_time AS DATE) = CAST(GETDATE() AS DATE)
       ORDER BY date_time DESC
-    `);    
+    `);
    
     const v1LiveStatuses = result2.recordset.map(item => item.v1_live_status);
     const v2LiveStatuses = result3.recordset.map(item => item.v2_live_status);
