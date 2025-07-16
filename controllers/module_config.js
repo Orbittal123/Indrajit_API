@@ -35,21 +35,21 @@ const getModules = async (req, res) => {
 const createModule = async (req, res) => {
     try {
         await poolConnect;
-        const { module_type, cell_count } = req.body;
+        const { module_code, cell_count } = req.body;
 
         // Check if module exists
         const check = await pool.request()
-            .input("module_type", sql.VarChar, module_type)
-            .query("SELECT * FROM vision_pack_master WHERE module_type = @module_type");
+            .input("module_code", sql.VarChar, module_code)
+            .query("SELECT * FROM vision_pack_master WHERE module_code = @module_code");
 
         if (check.recordset.length > 0) {
             return res.status(400).json({ error: "Module already exists" });
         }
 
         await pool.request()
-            .input("module_type", sql.VarChar, module_type)
+            .input("module_code", sql.VarChar, module_code)
             .input("cell_count", sql.Int, cell_count)
-            .query("INSERT INTO vision_pack_master (module_type, cell_count) VALUES (@module_type, @cell_count)");
+            .query("INSERT INTO vision_pack_master (module_code, cell_count) VALUES (@module_code, @cell_count)");
 
         res.json({ message: "Record saved" });
     } catch (err) {
@@ -60,14 +60,14 @@ const createModule = async (req, res) => {
 const updateModule = async (req, res) => {
     try {
         await poolConnect;
-        const { module_type, cell_count } = req.body;
+        const { module_code, cell_count } = req.body;
         const { id } = req.params;
 
         await pool.request()
             .input("id", sql.Int, id)
-            .input("module_type", sql.VarChar, module_type)
+            .input("module_code", sql.VarChar, module_code)
             .input("cell_count", sql.Int, cell_count)
-            .query(`UPDATE vision_pack_master SET module_type = @module_type, cell_count = @cell_count WHERE id = @id`);
+            .query(`UPDATE vision_pack_master SET module_code = @module_code, cell_count = @cell_count WHERE id = @id`);
 
         res.json({ message: "Record updated" });
     } catch (err) {
