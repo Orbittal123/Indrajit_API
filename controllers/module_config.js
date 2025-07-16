@@ -61,13 +61,34 @@ const updateModule = async (req, res) => {
     try {
         await poolConnect;
         const { module_code, cell_count } = req.body;
-        const { id } = req.params;
+        const { id } = req.params; // id refers to sr_no
 
-        await pool.request()
-            .input("id", sql.Int, id)
+        // Check for duplicate (excluding current)
+        const check = await pool.request()
             .input("module_code", sql.VarChar, module_code)
             .input("cell_count", sql.Int, cell_count)
-            .query(`UPDATE vision_pack_master SET module_code = @module_code, cell_count = @cell_count WHERE id = @id`);
+            .input("sr_no", sql.Int, id)
+            .query(`
+                SELECT * FROM vision_pack_master 
+                WHERE module_code = @module_code 
+                AND cell_count = @cell_count 
+                AND sr_no != @sr_no
+            `);
+
+        if (check.recordset.length > 0) {
+            return res.status(400).json({ error: "Module already exists" });
+        }
+
+        // Update
+        await pool.request()
+            .input("sr_no", sql.Int, id)
+            .input("module_code", sql.VarChar, module_code)
+            .input("cell_count", sql.Int, cell_count)
+            .query(`
+                UPDATE vision_pack_master 
+                SET module_code = @module_code, cell_count = @cell_count 
+                WHERE sr_no = @sr_no
+            `);
 
         res.json({ message: "Record updated" });
     } catch (err) {
@@ -75,19 +96,33 @@ const updateModule = async (req, res) => {
     }
 };
 
+
+
 const deleteModule = async (req, res) => {
     try {
         await poolConnect;
         const { id } = req.params;
-        await pool.request()
-            .input("id", sql.Int, id)
-            .query("DELETE FROM vision_pack_master WHERE id = @id");
 
-        res.json({ message: "Record deleted" });
+        // Check if record exists
+        const check = await pool.request()
+            .input("sr_no", sql.Int, id)
+            .query("SELECT * FROM vision_pack_master WHERE sr_no = @sr_no");
+
+        if (check.recordset.length === 0) {
+            return res.status(404).json({ error: "Record not found" });
+        }
+
+        // Delete the record
+        await pool.request()
+            .input("sr_no", sql.Int, id)
+            .query("DELETE FROM vision_pack_master WHERE sr_no = @sr_no");
+
+        res.json({ message: "Record deleted successfully" });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
 };
+
 
 
 const updateModuleCount = async (req, res) => {
