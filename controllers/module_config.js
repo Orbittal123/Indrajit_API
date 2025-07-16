@@ -60,15 +60,9 @@ const createModule = async (req, res) => {
 const updateModule = async (req, res) => {
     try {
         await poolConnect;
-
         const { module_code, cell_count } = req.body;
-        const { id } = req.params; // id is sr_no
+        const { id } = req.params;
 
-        console.log("Updating module with ID:", id);
-        console.log("Module code:", module_code);
-        console.log("Cell count:", cell_count);
-
-        // Check for existing module_code + cell_count combination excluding current row
         const check = await pool.request()
             .input("module_code", sql.VarChar, module_code)
             .input("cell_count", sql.Int, cell_count)
@@ -76,15 +70,14 @@ const updateModule = async (req, res) => {
             .query(`
                 SELECT * FROM vision_pack_master 
                 WHERE module_code = @module_code 
-                  AND cell_count = @cell_count
-                  AND sr_no != @sr_no
+                AND cell_count = @cell_count 
+                AND sr_no != @sr_no
             `);
 
         if (check.recordset.length > 0) {
             return res.status(400).json({ error: "Module with same code and cell count already exists" });
         }
 
-        // Proceed with update
         await pool.request()
             .input("sr_no", sql.Int, id)
             .input("cell_count", sql.Int, cell_count)
@@ -109,21 +102,11 @@ const deleteModule = async (req, res) => {
         await poolConnect;
         const { id } = req.params;
 
-        // Check if record exists
-        const check = await pool.request()
-            .input("sr_no", sql.Int, id)
-            .query("SELECT * FROM vision_pack_master WHERE sr_no = @sr_no");
-
-        if (check.recordset.length === 0) {
-            return res.status(404).json({ error: "Record not found" });
-        }
-
-        // Delete the record
         await pool.request()
-            .input("sr_no", sql.Int, id)
-            .query("DELETE FROM vision_pack_master WHERE sr_no = @sr_no");
+            .input("id", sql.Int, id)
+            .query("DELETE FROM vision_pack_master WHERE sr_no = @id");
 
-        res.json({ message: "Record deleted successfully" });
+        res.json({ message: "Module deleted successfully" });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
