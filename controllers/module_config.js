@@ -21,7 +21,11 @@ const getModules = async (req, res) => {
     try {
         await poolConnect; // wait for connection
         const result = await pool.request()
-            .query("SELECT * FROM vision_pack_master ORDER BY id DESC");
+            .query(`
+                SELECT TOP (200) 
+                    sr_no, module_code, cell_count, no_of_modules, date_time 
+                FROM vision_pack_master
+            `);
         res.json(result.recordset);
     } catch (err) {
         res.status(500).json({ error: err.message });
