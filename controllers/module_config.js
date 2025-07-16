@@ -61,40 +61,42 @@ const updateModule = async (req, res) => {
     try {
         await poolConnect;
         const { module_code, cell_count } = req.body;
-        const { id } = req.params; // id refers to sr_no
-
-        // Check for duplicate (excluding current)
+        const { id } = req.params; // id is sr_no
+        console.log("Updating module with ID:", id);
+        console.log("Module code:", module_code);
+        console.log("Cell count:", cell_count);
+        // Check if another row already has same module_code + cell_count
         const check = await pool.request()
             .input("module_code", sql.VarChar, module_code)
             .input("cell_count", sql.Int, cell_count)
             .input("sr_no", sql.Int, id)
             .query(`
-                SELECT * FROM vision_pack_master 
-                WHERE module_code = @module_code 
-                AND cell_count = @cell_count 
-                AND sr_no != @sr_no
-            `);
+        SELECT * FROM vision_pack_master 
+        WHERE module_code = @module_code 
+          AND cell_count = @cell_count
+          AND sr_no != @sr_no
+      `);
 
         if (check.recordset.length > 0) {
-            return res.status(400).json({ error: "Module already exists" });
+            return res.status(400).json({ error: "Module with same code and cell count already exists" });
         }
 
-        // Update
+        // Proceed with update
         await pool.request()
             .input("sr_no", sql.Int, id)
-            .input("module_code", sql.VarChar, module_code)
             .input("cell_count", sql.Int, cell_count)
             .query(`
-                UPDATE vision_pack_master 
-                SET module_code = @module_code, cell_count = @cell_count 
-                WHERE sr_no = @sr_no
-            `);
+        UPDATE vision_pack_master 
+        SET cell_count = @cell_count 
+        WHERE sr_no = @sr_no
+      `);
 
-        res.json({ message: "Record updated" });
+        res.json({ message: "Cell count updated successfully" });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
 };
+
 
 
 
@@ -126,54 +128,54 @@ const deleteModule = async (req, res) => {
 
 
 const updateModuleCount = async (req, res) => {
-  const { no_of_modules } = req.body;
+    const { no_of_modules } = req.body;
 
-  if (!no_of_modules) {
-    return res.status(400).json({ message: 'no_of_modules is required' });
-  }
+    if (!no_of_modules) {
+        return res.status(400).json({ message: 'no_of_modules is required' });
+    }
 
-  try {
-    await poolConnect; // Ensure pool is connected
+    try {
+        await poolConnect; // Ensure pool is connected
 
-    const result = await pool.request()
-      .input('no_of_modules', sql.NVarChar(50), no_of_modules)
-      .query(`
+        const result = await pool.request()
+            .input('no_of_modules', sql.NVarChar(50), no_of_modules)
+            .query(`
         UPDATE dbo.vision_pack_module_count
         SET no_of_modules = @no_of_modules
         WHERE sr_no = 1
       `);
 
-    if (result.rowsAffected[0] === 0) {
-      return res.status(404).json({ message: 'Record with sr_no = 1 not found' });
-    }
+        if (result.rowsAffected[0] === 0) {
+            return res.status(404).json({ message: 'Record with sr_no = 1 not found' });
+        }
 
-    res.status(200).json({ message: 'Module count updated successfully' });
-  } catch (err) {
-    console.error('SQL Error:', err);
-    res.status(500).json({ message: 'Internal server error', error: err.message });
-  }
+        res.status(200).json({ message: 'Module count updated successfully' });
+    } catch (err) {
+        console.error('SQL Error:', err);
+        res.status(500).json({ message: 'Internal server error', error: err.message });
+    }
 };
 
 const getModuleCount = async (req, res) => {
-  try {
-    await poolConnect;
+    try {
+        await poolConnect;
 
-    const result = await pool.request()
-      .query(`
+        const result = await pool.request()
+            .query(`
         SELECT sr_no, no_of_modules, date_time 
         FROM dbo.vision_pack_module_count
         WHERE sr_no = 1
       `);
 
-    if (result.recordset.length === 0) {
-      return res.status(404).json({ message: 'Record with sr_no = 1 not found' });
-    }
+        if (result.recordset.length === 0) {
+            return res.status(404).json({ message: 'Record with sr_no = 1 not found' });
+        }
 
-    res.status(200).json(result.recordset[0]);
-  } catch (err) {
-    console.error('SQL Error:', err);
-    res.status(500).json({ message: 'Internal server error', error: err.message });
-  }
+        res.status(200).json(result.recordset[0]);
+    } catch (err) {
+        console.error('SQL Error:', err);
+        res.status(500).json({ message: 'Internal server error', error: err.message });
+    }
 };
 
 export {
