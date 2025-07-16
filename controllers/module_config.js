@@ -60,22 +60,25 @@ const createModule = async (req, res) => {
 const updateModule = async (req, res) => {
     try {
         await poolConnect;
+
         const { module_code, cell_count } = req.body;
         const { id } = req.params; // id is sr_no
+
         console.log("Updating module with ID:", id);
         console.log("Module code:", module_code);
         console.log("Cell count:", cell_count);
-        // Check if another row already has same module_code + cell_count
+
+        // Check for existing module_code + cell_count combination excluding current row
         const check = await pool.request()
             .input("module_code", sql.VarChar, module_code)
             .input("cell_count", sql.Int, cell_count)
             .input("sr_no", sql.Int, id)
             .query(`
-        SELECT * FROM vision_pack_master 
-        WHERE module_code = @module_code 
-          AND cell_count = @cell_count
-          AND sr_no != @sr_no
-      `);
+                SELECT * FROM vision_pack_master 
+                WHERE module_code = @module_code 
+                  AND cell_count = @cell_count
+                  AND sr_no != @sr_no
+            `);
 
         if (check.recordset.length > 0) {
             return res.status(400).json({ error: "Module with same code and cell count already exists" });
@@ -86,16 +89,17 @@ const updateModule = async (req, res) => {
             .input("sr_no", sql.Int, id)
             .input("cell_count", sql.Int, cell_count)
             .query(`
-        UPDATE vision_pack_master 
-        SET cell_count = @cell_count 
-        WHERE sr_no = @sr_no
-      `);
+                UPDATE vision_pack_master 
+                SET cell_count = @cell_count 
+                WHERE sr_no = @sr_no
+            `);
 
         res.json({ message: "Cell count updated successfully" });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
 };
+
 
 
 
