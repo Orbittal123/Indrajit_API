@@ -4,14 +4,14 @@ import { WeekMonthDiff } from "../controllers/admincontroller.js";
 import { selectAll } from "../controllers/selectmodule.js";
 import { comparebarcode } from "../controllers/comparebarcode.js";
 import { insertmoduledata } from "../controllers/insertmoduledata.js";
-const {
+import {
     getModules,
     createModule,
     updateModule,
     deleteModule,
     updateModuleCount,
     getModuleCount
-} = require("../controllers/module_config.js");
+} from "../controllers/module_config.js";  //
 
 const router = express.Router();
 
