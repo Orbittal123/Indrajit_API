@@ -22,8 +22,8 @@ router.get("/comparebarcode", comparebarcode);
 router.get("/insertmoduledata", insertmoduledata);
 router.get("/module-specifications", getModules);
 router.post("/module-specifications", createModule);
-router.put("/module-specifications:id", updateModule);
-router.delete("/module-specifications:id", deleteModule);
+router.put("/module-specifications/:id", updateModule);
+router.delete("/module-specifications/:id", deleteModule);
 router.put("/update-module-count", updateModuleCount);
 router.get('/get-module-count', getModuleCount);
 

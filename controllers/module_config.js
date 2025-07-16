@@ -43,7 +43,7 @@ const createModule = async (req, res) => {
             .query("SELECT * FROM vision_pack_master WHERE module_code = @module_code");
 
         if (check.recordset.length > 0) {
-            return res.status(400).json({ error: "Module already exists" });
+            return res.status(400).json({ error: "Module already exists fail to create" });
         }
 
         await pool.request()
