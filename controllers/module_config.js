@@ -117,31 +117,32 @@ const deleteModule = async (req, res) => {
 const updateModuleCount = async (req, res) => {
     const { no_of_modules } = req.body;
 
-    if (!no_of_modules) {
-        return res.status(400).json({ message: 'no_of_modules is required' });
+    if (!no_of_modules || isNaN(no_of_modules)) {
+        return res.status(400).json({ message: 'Valid no_of_modules is required' });
     }
 
     try {
-        await poolConnect; // Ensure pool is connected
+        await poolConnect;
 
         const result = await pool.request()
-            .input('no_of_modules', sql.NVarChar(50), no_of_modules)
+            .input('no_of_modules', sql.Int, parseInt(no_of_modules))
             .query(`
-        UPDATE dbo.vision_pack_module_count
-        SET no_of_modules = @no_of_modules
-        WHERE sr_no = 1
-      `);
+                UPDATE dbo.vision_pack_module_count
+                SET no_of_modules = @no_of_modules
+                WHERE sr_no = 1
+            `);
 
         if (result.rowsAffected[0] === 0) {
-            return res.status(404).json({ message: 'Record with sr_no = 1 not found' });
+            return res.status(404).json({ message: 'No record with sr_no = 1 found' });
         }
 
-        res.status(200).json({ message: 'Module count updated successfully' });
+        return res.status(200).json({ message: 'Module count updated successfully' });
     } catch (err) {
-        console.error('SQL Error:', err);
-        res.status(500).json({ message: 'Internal server error', error: err.message });
+        console.error("SQL Update Error:", err);
+        return res.status(500).json({ message: 'Internal server error', error: err.message });
     }
 };
+
 
 const getModuleCount = async (req, res) => {
     try {
