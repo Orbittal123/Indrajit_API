@@ -21,7 +21,7 @@ const getModules = async (req, res) => {
     try {
         await poolConnect; // wait for connection
         const result = await pool.request()
-            .query("SELECT * FROM module_data ORDER BY id DESC");
+            .query("SELECT * FROM vision_pack_master ORDER BY id DESC");
         res.json(result.recordset);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -36,7 +36,7 @@ const createModule = async (req, res) => {
         // Check if module exists
         const check = await pool.request()
             .input("module_type", sql.VarChar, module_type)
-            .query("SELECT * FROM module_data WHERE module_type = @module_type");
+            .query("SELECT * FROM vision_pack_master WHERE module_type = @module_type");
 
         if (check.recordset.length > 0) {
             return res.status(400).json({ error: "Module already exists" });
@@ -45,7 +45,7 @@ const createModule = async (req, res) => {
         await pool.request()
             .input("module_type", sql.VarChar, module_type)
             .input("cell_count", sql.Int, cell_count)
-            .query("INSERT INTO module_data (module_type, cell_count) VALUES (@module_type, @cell_count)");
+            .query("INSERT INTO vision_pack_master (module_type, cell_count) VALUES (@module_type, @cell_count)");
 
         res.json({ message: "Record saved" });
     } catch (err) {
@@ -63,7 +63,7 @@ const updateModule = async (req, res) => {
             .input("id", sql.Int, id)
             .input("module_type", sql.VarChar, module_type)
             .input("cell_count", sql.Int, cell_count)
-            .query(`UPDATE module_data SET module_type = @module_type, cell_count = @cell_count WHERE id = @id`);
+            .query(`UPDATE vision_pack_master SET module_type = @module_type, cell_count = @cell_count WHERE id = @id`);
 
         res.json({ message: "Record updated" });
     } catch (err) {
@@ -77,7 +77,7 @@ const deleteModule = async (req, res) => {
         const { id } = req.params;
         await pool.request()
             .input("id", sql.Int, id)
-            .query("DELETE FROM module_data WHERE id = @id");
+            .query("DELETE FROM vision_pack_master WHERE id = @id");
 
         res.json({ message: "Record deleted" });
     } catch (err) {
